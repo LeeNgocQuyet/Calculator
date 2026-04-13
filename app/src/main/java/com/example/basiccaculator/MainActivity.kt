@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -23,7 +24,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.basiccaculator.model.CalculatorUiState
+import com.example.basiccaculator.ui.CalculatorViewModel
 import com.example.basiccaculator.ui.theme.BasicCaculatorTheme
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,53 +41,27 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun basicCalculatorApp() {
-    var expression by remember { mutableStateOf("") }
-    var result by remember { mutableStateOf("") }
+fun basicCalculatorApp(
+    uiState: CalculatorUiState = CalculatorUiState("",""),
+    viewmodel: CalculatorViewModel = CalculatorViewModel()
+) {
 
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        fun handleClick(btn: String) {
-            when (btn) {
-                "C" -> {
-                    expression = ""
-                    result = ""
-                }
-                "=" -> {
-                    result = calculate(expression)
-                }
-                else -> {
-                    val operators = "+-*/"
-                    val isCurrentOperator = btn in operators
-                    val isLastCharOperator = expression.isNotEmpty() && expression.last() in operators
 
-                    if (isCurrentOperator) {
-                        if (expression.isEmpty()) {
-                            if (btn == "-") expression = btn
-                        } else if (isLastCharOperator) {
-                            expression = expression.dropLast(1) + btn
-                        } else {
-                            expression += btn
-                        }
-                    } else {
-                        expression += btn
-                    }
-                }
-            }
-        }
 
         Text(
             modifier = Modifier.padding(bottom = 16.dp),
-            text = expression,
+            text = uiState.expression,
             fontSize = 32.sp
         )
 
         Text(
             modifier = Modifier.padding(bottom = 16.dp),
-            text = result,
+            text = uiState.result,
             fontSize = 24.sp,
             color = Color.Gray
         )
@@ -101,7 +79,7 @@ fun basicCalculatorApp() {
             Row {
                 row.forEach { btn ->
                     Button(
-                        onClick = { handleClick(btn) },
+                        onClick = { viewmodel.onButtonClick(btn) },
                         modifier = Modifier
                             .weight(1f)
                             .padding(4.dp)
@@ -114,54 +92,14 @@ fun basicCalculatorApp() {
     }
 }
 
-private fun calculate(expression: String): String {
-    if (expression.isEmpty()) return ""
-
-    var cleanExpression = expression
-    while (cleanExpression.isNotEmpty() && cleanExpression.last() in "+-*/") {
-        cleanExpression = cleanExpression.dropLast(1)
-    }
-
-    if (cleanExpression.isEmpty()) return ""
-
-    try {
-        val numbers = cleanExpression.split("+", "-", "*", "/").map { it.toDouble() }
-        val operators = cleanExpression.filter { it in "+-*/" }
-
-        if (numbers.isEmpty()) return ""
-
-        val stack = mutableListOf<Double>()
-        stack.add(numbers[0])
-
-        for (i in 0 until operators.length) {
-            val op = operators[i]
-            if (i + 1 >= numbers.size) break
-            
-            val nextNum = numbers[i + 1]
-
-            when (op) {
-                '+' -> stack.add(nextNum)
-                '-' -> stack.add(-nextNum)
-                '*' -> {
-                    val last = stack.removeAt(stack.size - 1)
-                    stack.add(last * nextNum)
-                }
-                '/' -> {
-                    val last = stack.removeAt(stack.size - 1)
-                    if (nextNum == 0.0) return "Invalid"
-                    stack.add(last / nextNum)
-                }
-            }
-        }
-
-        val finalResult = stack.sum()
-        
-        return finalResult.toString()
-
-    } catch (e: Exception) {
-        return "Error"
-    }
+@Composable
+private fun basicCalculatorApp(viewModel: CalculatorViewModel
+)
+{
+    val uiState by viewModel.uiState.collectAsState()
+    basicCalculatorApp(uiState)
 }
+
 
 @Preview(showBackground = true)
 @Composable
