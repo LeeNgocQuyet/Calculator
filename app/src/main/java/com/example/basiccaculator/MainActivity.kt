@@ -1,6 +1,7 @@
 package com.example.basiccaculator
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -14,9 +15,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.basiccaculator.model.CalculatorUiState
 import com.example.basiccaculator.ui.CalculatorViewModel
 import com.example.basiccaculator.ui.theme.BasicCaculatorTheme
@@ -34,25 +33,23 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             BasicCaculatorTheme {
-                basicCalculatorApp()
+                BasicCalculatorApp()
             }
         }
     }
 }
 
 @Composable
-fun basicCalculatorApp(
-    uiState: CalculatorUiState = CalculatorUiState("",""),
-    viewmodel: CalculatorViewModel = CalculatorViewModel()
+fun BasicCalculatorApp(
+    viewmodel: CalculatorViewModel = viewModel()
 ) {
+    val uiState by viewmodel.uiState.collectAsState()
 
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-
-
         Text(
             modifier = Modifier.padding(bottom = 16.dp),
             text = uiState.expression,
@@ -79,7 +76,10 @@ fun basicCalculatorApp(
             Row {
                 row.forEach { btn ->
                     Button(
-                        onClick = { viewmodel.onButtonClick(btn) },
+                        onClick = { 
+                            viewmodel.onButtonClick(btn)
+                            Log.d("Calculator", "Clicked: $btn -> New State: ${uiState.expression}")
+                        },
                         modifier = Modifier
                             .weight(1f)
                             .padding(4.dp)
@@ -92,19 +92,11 @@ fun basicCalculatorApp(
     }
 }
 
-@Composable
-private fun basicCalculatorApp(viewModel: CalculatorViewModel
-)
-{
-    val uiState by viewModel.uiState.collectAsState()
-    basicCalculatorApp(uiState)
-}
-
 
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     BasicCaculatorTheme {
-        basicCalculatorApp()
+        BasicCalculatorApp()
     }
 }
